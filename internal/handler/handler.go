@@ -3,15 +3,32 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"workshop/internal/api"
 )
 
 type Handler struct {
+	jokeClient api.Client
+	customJoke string
 }
 
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(jokeClient api.Client, customJoke string) *Handler {
+	return &Handler{
+		jokeClient: jokeClient,
+		customJoke: customJoke,
+	}
 }
 
 func (h *Handler) Hello(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "hello golang Voronezh!")
+	if h.customJoke != "" {
+		fmt.Fprint(w, h.customJoke)
+		return
+	}
+
+	joke, err := h.jokeClient.GetJoke()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprint(w, joke.Joke)
 }
